@@ -38,6 +38,13 @@ Typical use case:
 - `results/` – generated output files
 - `results/Logs/` – per-run log files
 
+## Folder Behavior (Created vs. Required)
+
+- `results/` is created automatically at runtime.
+- `results/Logs/` is created automatically at runtime.
+- `DSP_login_secrets/` must exist before running the script.
+- `DSP_login_secrets/` must contain at least one tenant file named `DSP_login_secrets_<TENANT>.json`.
+
 ## Prerequisites
 
 - Python 3.10+ (venv recommended)
@@ -53,15 +60,30 @@ Filename convention:
 
 The tenant column name in the output is derived from `<TENANT>`.
 
-Minimum content example:
+Template source file in this repo:
+
+- `DSP_login_secrets_TENANT.json.template`
+
+Expected JSON structure (same keys as template):
 
 ```json
 {
-  "host": "https://<your-datasphere-host>"
+  "client_id": "",
+  "client_secret": "",
+  "authorization_url": "",
+  "token_url": "",
+  "access_token": "",
+  "refresh_token": "",
+  "host": "https://<your-datasphere-host>",
+  "browser": "",
+  "authorization_flow": ""
 }
 ```
 
-Note: Additional required fields may depend on your Datasphere CLI/authentication setup.
+Important:
+- `host` must be set (the script validates this explicitly).
+- Other fields depend on your Datasphere CLI authentication flow.
+- Keep real secret values only in `DSP_login_secrets/*.json` (already ignored by `.gitignore`).
 
 ## Run
 
