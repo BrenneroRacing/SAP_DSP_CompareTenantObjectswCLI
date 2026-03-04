@@ -52,6 +52,39 @@ Typical use case:
   - On Windows this is usually `datasphere.cmd`
 - Valid secret files for each tenant
 
+## Quick Start
+
+If you only want results quickly, follow one of these two paths:
+
+### A) Compare multiple tenants (typical)
+
+1. Put one secret file per tenant into `DSP_login_secrets/`.
+   - Example: `DSP_login_secrets_TEST.json`, `DSP_login_secrets_Q.json`, `DSP_login_secrets_PROD.json`
+2. Run the script:
+
+```powershell
+py .\Model_Objects_all_tenants.py
+```
+
+3. Open the newest CSV in `results/` and compare `X` flags per tenant column.
+
+### B) Check objects for one tenant only
+
+1. Keep only one secret file in the secrets folder (or point `DSP_SECRETS_DIR` to a folder containing only one file).
+2. Run the script:
+
+```powershell
+py .\Model_Objects_all_tenants.py
+```
+
+3. The output still has the same structure, but only one tenant column is present.
+
+### What to do if it fails
+
+- Check `results/Logs/run_<timestamp>.log` first.
+- Verify `host` is set in the secret JSON.
+- Verify `datasphere --version` works in the same terminal.
+
 ## Useful Terminal Commands
 
 ### Check versions
@@ -105,6 +138,12 @@ Creates and activates an optional Python virtual environment.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
+
+Windows PowerShell alternative:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
 ### Install Git (Debian/Ubuntu-based BAS images)
@@ -313,6 +352,13 @@ Column layout:
 Per-run log file:
 
 - `results/Logs/run_<YYYYMMDD_HHMMSS>.log`
+
+### How to read the CSV quickly
+
+- Each row represents one object in one space (`Space ID`, `Technical Name`, `Type`).
+- Tenant columns show `X` when the object exists in that tenant.
+- Empty tenant cells mean the object was not found in that tenant.
+- Focus on rows where some tenants have `X` and others are empty to find deployment gaps.
 
 ## Error and Partial-Read Behavior
 
