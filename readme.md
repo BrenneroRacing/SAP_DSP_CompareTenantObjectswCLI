@@ -257,6 +257,19 @@ Open the IAS authorize endpoint:
 https://<ias-tenant>/oauth/authorize?response_type=code&client_id=<CLIENT_ID>&redirect_uri=<REDIRECT_URI>&scope=openid
 ```
 
+Important (`client_id` encoding for Authorization Code flow):
+
+- Your `client_id` may look "wrongly escaped", but this is expected in SAP BTP.
+- Example value:
+
+```text
+sb-9a17c3e4-2d6f-4b81-a7de-1f2c90ab7e44!b713902|client!b8421
+```
+
+- The pipe symbol must be URL-encoded in the authorize URL:
+  - `|` → `%7C`
+- If not encoded, IAS typically returns HTTP 400.
+
 Log in and capture the code returned in the redirect URL. In the URL search for:
 ```text
 ?code=<AUTHORIZATION_CODE>
