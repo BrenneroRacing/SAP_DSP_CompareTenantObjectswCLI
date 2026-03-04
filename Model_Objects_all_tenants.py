@@ -311,21 +311,56 @@ def load_tenant_configs(secrets_dir: Path) -> list[TenantConfig]:
 
 
 def login_to_tenant(config: TenantConfig) -> None:
-    """Ensure a fresh session exists and log in to one tenant."""
+    """Ensure a fresh session exists, log in, and verify the session."""
 
-    run_cli(["datasphere", "logout"], allow_failure=True)
-    run_cli(["datasphere", "config", "host", "set", config.host])
-    run_cli(
-        [
-            "datasphere",
-            "login",
-            "--host",
-            config.host,
-            "--secrets-file",
-            str(config.secrets_file),
-        ]
+    last_error: RuntimeError | None = None
+
+    for attempt in range(1, CLI_MAX_ATTEMPTS + 1):
+        run_cli(["datasphere", "logout"], allow_failure=True)
+        run_cli(["datasphere", "config", "host", "set", config.host])
+        run_cli(
+            [
+                "datasphere",
+                "login",
+                "--host",
+                config.host,
+                "--secrets-file",
+                str(config.secrets_file),
+            ]
+        )
+
+        try:
+            verification_result = run_cli_json(["datasphere", "spaces", "list", "--json"])
+            if not isinstance(verification_result, list):
+                raise RuntimeError(
+                    "Login verification failed: 'datasphere spaces list --json' did not return a list."
+                )
+
+            LOGGER.info("Login successful for tenant: %s", config.tenant)
+            return
+        except RuntimeError as error:
+            last_error = error
+            can_retry = attempt < CLI_MAX_ATTEMPTS
+
+            if can_retry:
+                wait_seconds = CLI_RETRY_BASE_SECONDS * (2 ** (attempt - 1))
+                LOGGER.warning(
+                    "Login verification failed for tenant '%s' (attempt %s/%s). Retrying in %.1fs. Details: %s",
+                    config.tenant,
+                    attempt,
+                    CLI_MAX_ATTEMPTS,
+                    wait_seconds,
+                    error,
+                )
+                time.sleep(wait_seconds)
+                continue
+
+            break
+
+    raise RuntimeError(
+        f"Unable to establish a verified login session for tenant '{config.tenant}' after "
+        f"{CLI_MAX_ATTEMPTS} attempts. Last error: {last_error}"
     )
-    LOGGER.info("Login successful for tenant: %s", config.tenant)
 
 
 def get_spaces() -> list[str]:
